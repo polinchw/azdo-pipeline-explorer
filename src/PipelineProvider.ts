@@ -224,6 +224,18 @@ class PipelineProvider implements vscode.TreeDataProvider<PipelineItem> {
         else if (element.type === "pipeline") {
             const logsData = await this.pipelineService.getPipelineLogs(pat!, element.pipelineUrl!);
             const stages = logsData.records.filter((record: any) => record.type === "Stage");
+
+            // Sort: in-progress/pending first, then by latest finishTime/startTime descending
+            const sortedStages = stages.sort((a: any, b: any) => {
+                const timeA = (a.state === 'inProgress' || a.state === 'pending')
+                    ? Number.MAX_SAFE_INTEGER
+                    : new Date(a.finishTime || a.startTime || 0).getTime();
+                const timeB = (b.state === 'inProgress' || b.state === 'pending')
+                    ? Number.MAX_SAFE_INTEGER
+                    : new Date(b.finishTime || b.startTime || 0).getTime();
+                return timeB - timeA;
+            });
+
             const pendingApprovals = await this.pipelineService?.getPendingApprovals(pat!, azureDevOpsSelectedProject!,  element.id!);
             let pendingApprovalId: any;
             if (pendingApprovals.length > 0) {
@@ -232,7 +244,7 @@ class PipelineProvider implements vscode.TreeDataProvider<PipelineItem> {
                 pendingApprovalId = undefined;
             }
 
-            return stages.map((stage: any) => {
+            return sortedStages.map((stage: any) => {
                 return new PipelineItem(
                     stage.id,
                     stage.type + ": " + stage.name,
