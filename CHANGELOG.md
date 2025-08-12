@@ -115,7 +115,7 @@
 
 - test automatic semver release
 
-## 0.10.0
+## 0.10.1
 
 - add view for pipeline definitions
 - add button and command to start pipeline
